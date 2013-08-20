@@ -12,7 +12,7 @@ NaN-boxing is a way to store various information in unused NaN-space in the IEEE
 
 Any value with the top 13 bits set represents a *quiet NaN*. The remaining bits are called the 'payload'. NaNs produced by hardware and C-library functions typically produce a payload of zero. We assume that all quiet NaNs with a non-zero payload can be used to encode whatever we want.
 
-On 64-bit platforms, unused bits in pointers are also used to encode various information. The representation is inspired by that used by Webkit's JavaScriptCore. It *should work* on most 32-bit and 64-bit little endian and big endian machines.
+On 64-bit platforms, unused bits in pointers are also used to encode various information. The representation is inspired by that used by Webkit's JavaScriptCore. It *should work* on most 32-bit and 64-bit little endian and big endian machines. (See Testing below.)
 
 Functions
 ---------
@@ -20,44 +20,44 @@ Functions
 A number of very short functions functions, all declared `static inline`, are defined to encode values as `nanbox_t`:
 
 ```c
+nanbox_t nanbox_from_double(double d);
+nanbox_t nanbox_from_int(int32_t i);
+nanbox_t nanbox_from_pointer(void* pointer);
+nanbox_t nanbox_from_boolean(bool b);
+nanbox_t nanbox_null(void);
+nanbox_t nanbox_undefined(void);
 nanbox_t nanbox_empty(void);
 nanbox_t nanbox_deleted(void);
-nanbox_t nanbox_undefined(void);
-nanbox_t nanbox_null(void);
 nanbox_t nanbox_true(void);   /* the same as nanbox_from_boolean(true) */
 nanbox_t nanbox_false(void);  /* the same as nanbox_from_boolean(false) */
-nanbox_t nanbox_from_boolean(bool b);
-nanbox_t nanbox_from_int(int32_t i);
-nanbox_t nanbox_from_double(double d);
-nanbox_t nanbox_from_pointer(void* pointer);
 ```
 
 ... to check the type:
 
 ```c
+bool nanbox_is_double(nanbox_t value);
+bool nanbox_is_int(nanbox_t value);
+bool nanbox_is_pointer(nanbox_t value);
+bool nanbox_is_boolean(nanbox_t value);
+bool nanbox_is_null(nanbox_t value);
+bool nanbox_is_undefined(nanbox_t value);
 bool nanbox_is_empty(nanbox_t value);
 bool nanbox_is_deleted(nanbox_t value);
-bool nanbox_is_undefined(nanbox_t value);
-bool nanbox_is_null(nanbox_t value);
 bool nanbox_is_true(nanbox_t value);
 bool nanbox_is_false(nanbox_t value);
-bool nanbox_is_boolean(nanbox_t value);
-bool nanbox_is_int(nanbox_t value);
-bool nanbox_is_double(nanbox_t value);
-bool nanbox_is_pointer(nanbox_t value);
-bool nanbox_is_number(nanbox_t value);  /* either int32 or double */
-bool nanbox_is_undefined_or_null(nanbox_t value);
+bool nanbox_is_number(nanbox_t value);  /* either int or double */
+bool nanbox_is_undefined_or_null(nanbox_t value); /* either */
 bool nanbox_is_aux(nanbox_t value);     /* auxillary space */
-```c
+```
 
 ... and to decode the value:
 
 ```c
-bool nanbox_to_boolean(nanbox_t value);
-int32_t nanbox_to_int(nanbox_t value);
 double nanbox_to_double(nanbox_t value);
-double nanbox_to_number(nanbox_t value); /* value can be int or double */
+int32_t nanbox_to_int(nanbox_t value);
 void* nanbox_to_pointer(nanbox_t value);
+bool nanbox_to_boolean(nanbox_t value);
+double nanbox_to_number(nanbox_t value); /* value can be int or double */
 ```
 
 Before fetching the value using these functions, you should make sure the nanbox is holdig a value of the correct type, e.g. using the corresponding `nanbox_is_...` function. If the encoded value is not of the correct type, the results of the `nanbox_to_...` functions are undefined. If compiled with assertions, you will get a failed assertion when trying to fetch a value of the wrong type.
@@ -65,7 +65,7 @@ Before fetching the value using these functions, you should make sure the nanbox
 The 'empty' value
 -----------------
 
-The 'empty' value is guarranteed to consist of a single repeated byte. This is to make sure `memset` can be used to set all the elements in an array of nanboxes to 'empty'. The macro `NANBOX_EMPTY_BYTE` represents the repeated byte of 'empty' values.
+The 'empty' value is designed to used to represent empty slots in e.g. a hashtable. It is guarranteed to consist of a single repeated byte. This is to make sure `memset` can be used to set all the elements in an array of nanboxes to 'empty'. The macro `NANBOX_EMPTY_BYTE` represents the byte that, when repeated 8 times (64 bits), makes up an 'empty' value.
 
 ```c
 void foo(void) {
