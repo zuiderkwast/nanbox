@@ -79,7 +79,7 @@ void foo(void) {
 User-defined pointer type
 -------------------------
 
-When storing pointers in a nanbox, the type `void*` is used by default. This can be changed by defining `NANBOX_POINTER_TYPE` to the pointer type of choice, before including `nanbox.h`. The type must be a pointer type, because unused bits in the pointers are used to encode various data.
+When encoding and decoding pointers to/from a nanbox, the pointer type `void*` is used by default. This can be changed by defining `NANBOX_POINTER_TYPE` to the pointer type of choice, before including `nanbox.h`. The type must be a pointer type, because unused bits in the pointers are used to encode various data.
 
 Auxillary data
 --------------
