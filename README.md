@@ -88,6 +88,11 @@ Apart from doubles, pointers, ints, booleans, null, etc. there are still some bi
 
 Another way to access the data is to use `tag` and `payload`. These each represent 32 bits of the nanbox data. If the a nanbox has its tag (`nanbox.as_bits.tag`) in the range `NANBOX_MIN_AUX_TAG`..`NANBOX_MAX_AUX_TAG` and a payload `nanbox.as_bits.payload` being any 32-bit integer value, then the nanbox data is in auxillary space.
 
+Short strings
+-------------
+
+As an example of what auxillary data can be used for, the file `nanbox_shortstring.h` is included, which implements a scheme to store strings of up to 6 bytes in the auxillary space of a nanbox. The functions `nanbox_is_shortstring`, `nanbox_shortstring_create`, etc. are defined and a small demo program is included in `shortstring_demo.c`.
+
 Testing
 -------
 
