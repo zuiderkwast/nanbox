@@ -76,6 +76,16 @@ void foo(void) {
 }
 ```
 
+User-defined prefix instead of 'nanbox'
+---------------------------------------
+
+You can define `NANBOX_PREFIX` to the prefix you want, before including
+`nanbox.h`. Then, the functions and types will be e.g.
+`bool myprefix_is_double(myprefix_t value)`, etc. By undefining `NANBOX_H` and
+redefining `NANBOX_PREFIX` (and possibly some of the other macros such as
+`NANBOX_POINTER_TYPE`) you can include `nanbox.h` multiple times to create
+multiple instances of nanbox type.
+
 User-defined pointer type
 -------------------------
 

@@ -54,6 +54,14 @@
 #ifndef NANBOX_H
 #define NANBOX_H
 
+/*
+ * Define this before including this file to get functions and type prefixed
+ * with something other than "nanbox".
+ */
+#ifndef NANBOX_PREFIX
+#define NANBOX_PREFIX nanbox
+#endif
+
 /* User-defined pointer type. Defaults to void*. Must be a pointer type. */
 #ifndef NANBOX_POINTER_TYPE
 #define NANBOX_POINTER_TYPE void*
@@ -80,11 +88,22 @@
 #define NANBOX_AUX5_TYPE void*
 #endif
 
+
 #include <stddef.h>  // size_t
 #include <stdint.h>  // int64_t, int32_t
 #include <stdbool.h> // bool, true, false
 #include <string.h>  // memset
 #include <assert.h>
+
+/*
+ * Macros to expand the prefix.
+ */
+#undef NANBOX_XXNAME
+#define NANBOX_XXNAME(prefix, name) prefix ## name
+#undef NANBOX_XNAME
+#define NANBOX_XNAME(prefix, name) NANBOX_XXNAME(prefix, name)
+#undef NANBOX_NAME
+#define NANBOX_NAME(name) NANBOX_XNAME(NANBOX_PREFIX, name)
 
 /*
  * Detect OS and endianess.
@@ -146,7 +165,7 @@
  * In 32-bit mode, the double is unmasked. In 64-bit mode, the pointer is
  * unmasked.
  */
-union nanbox {
+union NANBOX_NAME(_u) {
 	uint64_t as_int64;
 	#if defined(NANBOX_64)
 	NANBOX_POINTER_TYPE pointer;
@@ -164,7 +183,10 @@ union nanbox {
 	} as_bits;
 	#endif
 };
-typedef union nanbox nanbox_t;
+
+#undef NANBOX_T
+#define NANBOX_T NANBOX_NAME(_t)
+typedef union NANBOX_NAME(_u) NANBOX_T;
 
 #if defined(NANBOX_64)
 
@@ -246,16 +268,16 @@ typedef union nanbox nanbox_t;
 // NANBOX_EMPTY_BYTE as the value for every byte.
 #define NANBOX_EMPTY_BYTE           0x0
 
-// Define bool nanbox_is_xxx(nanbox_t val) and nanbox_t nanbox_xxx(void)
+// Define bool nanbox_is_xxx(NANBOX_T val) and NANBOX_T nanbox_xxx(void)
 // with empty, deleted, true, false, undefined and null substituted for xxx.
-#define NANBOX_IMMIDIATE_VALUE_FUNCTIONS(NAME, VALUE)        \
-	static inline nanbox_t nanbox_##NAME(void) {         \
-		nanbox_t val;                                \
-		val.as_int64 = VALUE;                        \
-		return val;                                  \
-	}                                                    \
-	static inline bool nanbox_is_##NAME(nanbox_t val) {  \
-		return val.as_int64 == VALUE;                \
+#define NANBOX_IMMIDIATE_VALUE_FUNCTIONS(NAME, VALUE)                \
+	static inline NANBOX_T NANBOX_NAME(_##NAME)(void) {        \
+		NANBOX_T val;                                        \
+		val.as_int64 = VALUE;                                \
+		return val;                                          \
+	}                                                            \
+	static inline bool NANBOX_NAME(_is_##NAME)(NANBOX_T val) { \
+		return val.as_int64 == VALUE;                        \
 	}
 NANBOX_IMMIDIATE_VALUE_FUNCTIONS(empty, NANBOX_VALUE_EMPTY)
 NANBOX_IMMIDIATE_VALUE_FUNCTIONS(deleted, NANBOX_VALUE_DELETED)
@@ -264,74 +286,74 @@ NANBOX_IMMIDIATE_VALUE_FUNCTIONS(true, NANBOX_VALUE_TRUE)
 NANBOX_IMMIDIATE_VALUE_FUNCTIONS(undefined, NANBOX_VALUE_UNDEFINED)
 NANBOX_IMMIDIATE_VALUE_FUNCTIONS(null, NANBOX_VALUE_NULL)
 
-static inline bool nanbox_is_undefined_or_null(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_undefined_or_null)(NANBOX_T val) {
 	// Undefined and null are the same if we remove the 'undefined' bit.
 	return (val.as_int64 & ~8) == NANBOX_VALUE_NULL;
 }
 
-static inline bool nanbox_is_boolean(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_boolean)(NANBOX_T val) {
 	// True and false are the same if we remove the 'true' bit.
 	return (val.as_int64 & ~1) == NANBOX_VALUE_FALSE;
 }
-static inline bool nanbox_to_boolean(nanbox_t val) {
-	assert(nanbox_is_boolean(val));
+static inline bool NANBOX_NAME(_to_boolean)(NANBOX_T val) {
+	assert(NANBOX_NAME(_is_boolean)(val));
 	return val.as_int64 & 1;
 }
-static inline nanbox_t nanbox_from_boolean(bool b) {
-	nanbox_t val;
+static inline NANBOX_T NANBOX_NAME(_from_boolean)(bool b) {
+	NANBOX_T val;
 	val.as_int64 = b ? NANBOX_VALUE_TRUE : NANBOX_VALUE_FALSE;
 	return val;
 }
 
 /* true if val is a double or an int */
-static inline bool nanbox_is_number(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_number)(NANBOX_T val) {
 	return val.as_int64 >= NANBOX_MIN_NUMBER;
 }
 
-static inline bool nanbox_is_int(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_int)(NANBOX_T val) {
 	return (val.as_int64 & NANBOX_HIGH16_TAG) == NANBOX_MIN_NUMBER;
 }
-static inline nanbox_t nanbox_from_int(int32_t i) {
-	nanbox_t val;
+static inline NANBOX_T NANBOX_NAME(_from_int)(int32_t i) {
+	NANBOX_T val;
 	val.as_int64 = NANBOX_MIN_NUMBER | (uint32_t)i;
 	return val;
 }
-static inline int32_t nanbox_to_int(nanbox_t val) {
-	assert(nanbox_is_int(val));
+static inline int32_t NANBOX_NAME(_to_int)(NANBOX_T val) {
+	assert(NANBOX_NAME(_is_int)(val));
 	return (int32_t)val.as_int64;
 }
 
-static inline bool nanbox_is_double(nanbox_t val) {
-	return nanbox_is_number(val) && !nanbox_is_int(val);
+static inline bool NANBOX_NAME(_is_double)(NANBOX_T val) {
+	return NANBOX_NAME(_is_number)(val) && !NANBOX_NAME(_is_int)(val);
 }
-static inline nanbox_t nanbox_from_double(double d) {
-	nanbox_t val;
+static inline NANBOX_T NANBOX_NAME(_from_double)(double d) {
+	NANBOX_T val;
 	val.as_double = d;
 	val.as_int64 += NANBOX_DOUBLE_ENCODE_OFFSET;
-	assert(nanbox_is_double(val));
+	assert(NANBOX_NAME(_is_double)(val));
 	return val;
 }
-static inline double nanbox_to_double(nanbox_t val) {
-	assert(nanbox_is_double(val));
+static inline double NANBOX_NAME(_to_double)(NANBOX_T val) {
+	assert(NANBOX_NAME(_is_double)(val));
 	val.as_int64 -= NANBOX_DOUBLE_ENCODE_OFFSET;
 	return val.as_double;
 }
 
-static inline bool nanbox_is_pointer(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_pointer)(NANBOX_T val) {
     return !(val.as_int64 & ~NANBOX_MASK_POINTER) && val.as_int64;
 }
-static inline NANBOX_POINTER_TYPE nanbox_to_pointer(nanbox_t val) {
-	assert(nanbox_is_pointer(val));
+static inline NANBOX_POINTER_TYPE NANBOX_NAME(_to_pointer)(NANBOX_T val) {
+	assert(NANBOX_NAME(_is_pointer)(val));
 	return val.pointer;
 }
-static inline nanbox_t nanbox_from_pointer(NANBOX_POINTER_TYPE pointer) {
-	nanbox_t val;
+static inline NANBOX_T NANBOX_NAME(_from_pointer)(NANBOX_POINTER_TYPE pointer) {
+	NANBOX_T val;
 	val.pointer = pointer;
-	assert(nanbox_is_pointer(val));
+	assert(NANBOX_NAME(_is_pointer)(val));
 	return val;
 }
 
-static inline bool nanbox_is_aux(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_aux)(NANBOX_T val) {
 	return val.as_int64 >= NANBOX_MIN_AUX &&
 	       val.as_int64 <= NANBOX_MAX_AUX;
 }
@@ -368,36 +390,36 @@ static inline bool nanbox_is_aux(nanbox_t val) {
 #define NANBOX_MAX_AUX            0xfffdffffffffffffllu
 
 // Define nanbox_xxx and nanbox_is_xxx for deleted, undefined and null.
-#define NANBOX_IMMIDIATE_VALUE_FUNCTIONS(NAME, TAG)          \
-	static inline nanbox_t nanbox_##NAME(void) {         \
-		nanbox_t val;                                \
-		val.as_bits.tag = TAG;                       \
-		val.as_bits.payload = 0;                     \
-		return val;                                  \
-	}                                                    \
-	static inline bool nanbox_is_##NAME(nanbox_t val) {  \
-		return val.as_bits.tag == TAG;               \
+#define NANBOX_IMMIDIATE_VALUE_FUNCTIONS(NAME, TAG)                   \
+	static inline NANBOX_T NANBOX_NAME(_##NAME)(void) {       \
+		NANBOX_T val;                                         \
+		val.as_bits.tag = TAG;                                \
+		val.as_bits.payload = 0;                              \
+		return val;                                           \
+	}                                                             \
+	static inline bool NANBOX_NAME(_is_##NAME)(NANBOX_T val) {  \
+		return val.as_bits.tag == TAG;                        \
 	}
 NANBOX_IMMIDIATE_VALUE_FUNCTIONS(deleted, NANBOX_DELETED_VALUE_TAG)
 NANBOX_IMMIDIATE_VALUE_FUNCTIONS(undefined, NANBOX_UNDEFINED_TAG)
 NANBOX_IMMIDIATE_VALUE_FUNCTIONS(null, NANBOX_NULL_TAG)
 
 // The undefined and null tags differ only in one bit
-static inline bool nanbox_is_undefined_or_null(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_undefined_or_null)(NANBOX_T val) {
 	return (val.as_bits.tag & ~1) == NANBOX_UNDEFINED_TAG;
 }
 
-static inline nanbox_t nanbox_empty(void) {
-	nanbox_t val;
+static inline NANBOX_T NANBOX_NAME(_empty)(void) {
+	NANBOX_T val;
 	val.as_int64 = 0xffffffffffffffffllu;
 	return val;
 }
-static inline bool nanbox_is_empty(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_empty)(NANBOX_T val) {
 	return val.as_bits.tag == 0xffffffff;
 }
 
 /* Returns true if the value is auxillary space */
-static inline bool nanbox_is_aux(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_aux)(NANBOX_T val) {
 	return val.as_bits.tag >= NANBOX_MIN_AUX_TAG &&
 	       val.as_bits.tag < NANBOX_POINTER_TAG;
 }
@@ -405,15 +427,15 @@ static inline bool nanbox_is_aux(nanbox_t val) {
 // Define nanbox_is_yyy, nanbox_to_yyy and nanbox_from_yyy for
 // boolean, int, pointer and aux1-aux5
 #define NANBOX_TAGGED_VALUE_FUNCTIONS(NAME, TYPE, TAG) \
-	static inline bool nanbox_is_##NAME(nanbox_t val) { \
+	static inline bool NANBOX_NAME(_is_##NAME)(NANBOX_T val) { \
 		return val.as_bits.tag == TAG; \
 	} \
-	static inline TYPE nanbox_to_##NAME(nanbox_t val) { \
+	static inline TYPE NANBOX_NAME(_to_##NAME)(NANBOX_T val) { \
 		assert(val.as_bits.tag == TAG); \
 		return (TYPE)val.as_bits.payload; \
 	} \
-	static inline nanbox_t nanbox_from_##NAME(TYPE a) { \
-		nanbox_t val; \
+	static inline NANBOX_T NANBOX_NAME(_from_##NAME)(TYPE a) { \
+		NANBOX_T val; \
 		val.as_bits.tag = TAG; \
 		val.as_bits.payload = (int32_t)a; \
 		return val; \
@@ -423,35 +445,36 @@ NANBOX_TAGGED_VALUE_FUNCTIONS(boolean, bool, NANBOX_BOOLEAN_TAG)
 NANBOX_TAGGED_VALUE_FUNCTIONS(int, int32_t, NANBOX_INT_TAG)
 NANBOX_TAGGED_VALUE_FUNCTIONS(pointer, NANBOX_POINTER_TYPE, NANBOX_POINTER_TAG)
 
-static inline nanbox_t nanbox_true(void) {
-	return nanbox_from_boolean(true);
+static inline NANBOX_T NANBOX_NAME(_true)(void) {
+	return NANBOX_NAME(_from_boolean)(true);
 }
-static inline nanbox_t nanbox_false(void) {
-	return nanbox_from_boolean(false);
+static inline NANBOX_T NANBOX_NAME(_false)(void) {
+	return NANBOX_NAME(_from_boolean)(false);
 }
-static inline bool nanbox_is_true(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_true)(NANBOX_T val) {
 	return val.as_bits.tag == NANBOX_BOOLEAN_TAG && val.as_bits.payload;
 }
-static inline bool nanbox_is_false(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_false)(NANBOX_T val) {
 	return val.as_bits.tag == NANBOX_BOOLEAN_TAG && !val.as_bits.payload;
 }
 
-static inline bool nanbox_is_double(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_double)(NANBOX_T val) {
 	return val.as_bits.tag < NANBOX_INT_TAG;
 }
 // is number = is double or is int
-static inline bool nanbox_is_number(nanbox_t val) {
+static inline bool NANBOX_NAME(_is_number)(NANBOX_T val) {
 	return val.as_bits.tag <= NANBOX_INT_TAG;
 }
 
-static inline nanbox_t nanbox_from_double(double d) {
-	nanbox_t val;
+static inline NANBOX_T NANBOX_NAME(_from_double)(double d) {
+	NANBOX_T val;
 	val.as_double = d;
-	assert(nanbox_is_double(val) && val.as_bits.tag <= NANBOX_MAX_DOUBLE_TAG);
+	assert(NANBOX_NAME(_is_double)(val) &&
+	       val.as_bits.tag <= NANBOX_MAX_DOUBLE_TAG);
 	return val;
 }
-static inline double nanbox_to_double(nanbox_t val) {
-	assert(nanbox_is_double(val));
+static inline double NANBOX_NAME(_to_double)(NANBOX_T val) {
+	assert(NANBOX_NAME(_is_double)(val));
 	return val.as_double;
 }
 
@@ -461,9 +484,10 @@ static inline double nanbox_to_double(nanbox_t val) {
  * Representation-independent functions
  */
 
-static inline double nanbox_to_number(nanbox_t val) {
-	assert(nanbox_is_number(val));
-	return nanbox_is_int(val) ? nanbox_to_int(val) : nanbox_to_double(val);
+static inline double NANBOX_NAME(_to_number)(NANBOX_T val) {
+	assert(NANBOX_NAME(_is_number)(val));
+	return NANBOX_NAME(_is_int)(val) ? NANBOX_NAME(_to_int)(val)
+	                                 : NANBOX_NAME(_to_double)(val);
 }
 
 #endif /* NANBOX_H */
