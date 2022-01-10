@@ -270,7 +270,7 @@ typedef union NANBOX_NAME(_u) NANBOX_T;
 
 // Define bool nanbox_is_xxx(NANBOX_T val) and NANBOX_T nanbox_xxx(void)
 // with empty, deleted, true, false, undefined and null substituted for xxx.
-#define NANBOX_IMMIDIATE_VALUE_FUNCTIONS(NAME, VALUE)                \
+#define NANBOX_IMMEDIATE_VALUE_FUNCTIONS(NAME, VALUE)                \
 	static inline NANBOX_T NANBOX_NAME(_##NAME)(void) {        \
 		NANBOX_T val;                                        \
 		val.as_int64 = VALUE;                                \
@@ -279,12 +279,12 @@ typedef union NANBOX_NAME(_u) NANBOX_T;
 	static inline bool NANBOX_NAME(_is_##NAME)(NANBOX_T val) { \
 		return val.as_int64 == VALUE;                        \
 	}
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(empty, NANBOX_VALUE_EMPTY)
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(deleted, NANBOX_VALUE_DELETED)
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(false, NANBOX_VALUE_FALSE)
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(true, NANBOX_VALUE_TRUE)
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(undefined, NANBOX_VALUE_UNDEFINED)
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(null, NANBOX_VALUE_NULL)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(empty, NANBOX_VALUE_EMPTY)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(deleted, NANBOX_VALUE_DELETED)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(false, NANBOX_VALUE_FALSE)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(true, NANBOX_VALUE_TRUE)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(undefined, NANBOX_VALUE_UNDEFINED)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(null, NANBOX_VALUE_NULL)
 
 static inline bool NANBOX_NAME(_is_undefined_or_null)(NANBOX_T val) {
 	// Undefined and null are the same if we remove the 'undefined' bit.
@@ -390,7 +390,7 @@ static inline bool NANBOX_NAME(_is_aux)(NANBOX_T val) {
 #define NANBOX_MAX_AUX            0xfffdffffffffffffllu
 
 // Define nanbox_xxx and nanbox_is_xxx for deleted, undefined and null.
-#define NANBOX_IMMIDIATE_VALUE_FUNCTIONS(NAME, TAG)                   \
+#define NANBOX_IMMEDIATE_VALUE_FUNCTIONS(NAME, TAG)                   \
 	static inline NANBOX_T NANBOX_NAME(_##NAME)(void) {       \
 		NANBOX_T val;                                         \
 		val.as_bits.tag = TAG;                                \
@@ -400,9 +400,9 @@ static inline bool NANBOX_NAME(_is_aux)(NANBOX_T val) {
 	static inline bool NANBOX_NAME(_is_##NAME)(NANBOX_T val) {  \
 		return val.as_bits.tag == TAG;                        \
 	}
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(deleted, NANBOX_DELETED_VALUE_TAG)
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(undefined, NANBOX_UNDEFINED_TAG)
-NANBOX_IMMIDIATE_VALUE_FUNCTIONS(null, NANBOX_NULL_TAG)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(deleted, NANBOX_DELETED_VALUE_TAG)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(undefined, NANBOX_UNDEFINED_TAG)
+NANBOX_IMMEDIATE_VALUE_FUNCTIONS(null, NANBOX_NULL_TAG)
 
 // The undefined and null tags differ only in one bit
 static inline bool NANBOX_NAME(_is_undefined_or_null)(NANBOX_T val) {
